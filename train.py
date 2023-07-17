@@ -435,38 +435,38 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
 
 def parse_opt(known=False):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', type=str, default=ROOT / 'yolov3-tiny.pt', help='initial weights path')
-    parser.add_argument('--cfg', type=str, default='', help='model.yaml path')
-    parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='dataset.yaml path')
-    parser.add_argument('--hyp', type=str, default=ROOT / 'data/hyps/hyp.scratch-low.yaml', help='hyperparameters path')
-    parser.add_argument('--epochs', type=int, default=100, help='total training epochs')
-    parser.add_argument('--batch-size', type=int, default=16, help='total batch size for all GPUs, -1 for autobatch')
-    parser.add_argument('--imgsz', '--img', '--img-size', type=int, default=640, help='train, val image size (pixels)')
+    parser.add_argument('--weights', type=str, default=ROOT / 'yolov3-tiny.pt', help='initial weights path')     # 预训练模型的权重文件
+    parser.add_argument('--cfg', type=str, default='', help='model.yaml path') # 配置文件，如果为空，则使用以下的配置，如果不为空，则使用配置文件中的配置
+    parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='dataset.yaml path') # 数据集配置文件 包括path、train、val、test、nc、names、download等
+    parser.add_argument('--hyp', type=str, default=ROOT / 'data/hyps/hyp.scratch-low.yaml', help='hyperparameters path')  # hyp: 初始超参文件
+    parser.add_argument('--epochs', type=int, default=100, help='total training epochs') # 训练轮次
+    parser.add_argument('--batch-size', type=int, default=16, help='total batch size for all GPUs, -1 for autobatch') #  batch-size: 训练批次大小
+    parser.add_argument('--imgsz', '--img', '--img-size', type=int, default=640, help='train, val image size (pixels)') # img-size: 输入网络的图片分辨率大小
     parser.add_argument('--rect', action='store_true', help='rectangular training')
-    parser.add_argument('--resume', nargs='?', const=True, default=False, help='resume most recent training')
-    parser.add_argument('--nosave', action='store_true', help='only save final checkpoint')
-    parser.add_argument('--noval', action='store_true', help='only validate final epoch')
-    parser.add_argument('--noautoanchor', action='store_true', help='disable AutoAnchor')
-    parser.add_argument('--noplots', action='store_true', help='save no plot files')
+    parser.add_argument('--resume', nargs='?', const=True, default=False, help='resume most recent training') # resume: 断点训练, 从上次打断的训练结果处接着训练  默认False
+    parser.add_argument('--nosave', action='store_true', help='only save final checkpoint')  # 不保存模型  默认False(保存)
+    parser.add_argument('--noval', action='store_true', help='only validate final epoch') #  是否只测试最后一轮 默认False  True: 只测试最后一轮   False: 每轮训练完都测试mAP
+    parser.add_argument('--noautoanchor', action='store_true', help='disable AutoAnchor') # 不自动调整anchor 默认False(自动调整anchor)
+    parser.add_argument('--noplots', action='store_true', help='save no plot files') # 不绘制点
     parser.add_argument('--evolve', type=int, nargs='?', const=300, help='evolve hyperparameters for x generations')
     parser.add_argument('--bucket', type=str, default='', help='gsutil bucket')
-    parser.add_argument('--cache', type=str, nargs='?', const='ram', help='image --cache ram/disk')
-    parser.add_argument('--image-weights', action='store_true', help='use weighted image selection for training')
-    parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
-    parser.add_argument('--multi-scale', action='store_true', help='vary img-size +/- 50%%')
-    parser.add_argument('--single-cls', action='store_true', help='train multi-class data as single-class')
-    parser.add_argument('--optimizer', type=str, choices=['SGD', 'Adam', 'AdamW'], default='SGD', help='optimizer')
-    parser.add_argument('--sync-bn', action='store_true', help='use SyncBatchNorm, only available in DDP mode')
-    parser.add_argument('--workers', type=int, default=8, help='max dataloader workers (per RANK in DDP mode)')
-    parser.add_argument('--project', default=ROOT / 'runs/train', help='save to project/name')
-    parser.add_argument('--name', default='exp', help='save to project/name')
+    parser.add_argument('--cache', type=str, nargs='?', const='ram', help='image --cache ram/disk') # 是否提前缓存图片到内存cache,以加速训练  默认False。内存足够，可以用
+    parser.add_argument('--image-weights', action='store_true', help='use weighted image selection for training') # 是否使用图片采样策略(selection img to training by class weights) 默认False 不使用。
+    parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu') # 训练的设备
+    parser.add_argument('--multi-scale', action='store_true', help='vary img-size +/- 50%%') # 是否使用多尺度训练 默认False
+    parser.add_argument('--single-cls', action='store_true', help='train multi-class data as single-class') # 数据集是否只有一个类别 默认False
+    parser.add_argument('--optimizer', type=str, choices=['SGD', 'Adam', 'AdamW'], default='SGD', help='optimizer') # 选择要使用的优化器 默认使用SGD
+    parser.add_argument('--sync-bn', action='store_true', help='use SyncBatchNorm, only available in DDP mode') # 是否使用跨卡同步bn操作,在DDP中使用  默认False
+    parser.add_argument('--workers', type=int, default=8, help='max dataloader workers (per RANK in DDP mode)') #  dataloader中的最大work数（线程个数）
+    parser.add_argument('--project', default=ROOT / 'runs/train', help='save to project/name') # 训练结果保存的根目录 默认是runs/train
+    parser.add_argument('--name', default='exp', help='save to project/name') #  训练结果保存的目录 默认是exp  最终: runs/train/exp
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--quad', action='store_true', help='quad dataloader')
     parser.add_argument('--cos-lr', action='store_true', help='cosine LR scheduler')
     parser.add_argument('--label-smoothing', type=float, default=0.0, help='Label smoothing epsilon')
     parser.add_argument('--patience', type=int, default=100, help='EarlyStopping patience (epochs without improvement)')
     parser.add_argument('--freeze', nargs='+', type=int, default=[0], help='Freeze layers: backbone=10, first3=0 1 2')
-    parser.add_argument('--save-period', type=int, default=-1, help='Save checkpoint every x epochs (disabled if < 1)')
+    parser.add_argument('--save-period', type=int, default=1, help='Save checkpoint every x epochs (disabled if < 1)')  #meijilunhaocun
     parser.add_argument('--seed', type=int, default=0, help='Global training seed')
     parser.add_argument('--local_rank', type=int, default=-1, help='Automatic DDP Multi-GPU argument, do not modify')
 
